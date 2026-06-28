@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import {
   LEVELS,
+  MAX_LEVEL,
   BULLET_LIFETIME_MS,
   PLAYER_BULLET_SPEED,
   PLAYER_SPAWN,
@@ -192,9 +193,11 @@ class MenuScene extends Phaser.Scene {
       this.scene.start("game", { level: this.save.unlockedLevel });
     });
     this.add.text(WIDTH / 2, 240, "关卡选择", textStyle(18, "#aab7c4")).setOrigin(0.5);
-    for (let index = 1; index <= 4; index += 1) {
+    const levelButtonSpacing = 86;
+    const levelButtonStartX = WIDTH / 2 - ((MAX_LEVEL - 1) * levelButtonSpacing) / 2;
+    for (let index = 1; index <= MAX_LEVEL; index += 1) {
       const unlocked = index <= this.save.unlockedLevel;
-      addButton(this, 330 + (index - 1) * 100, 282, unlocked ? `${index}` : "锁", () => {
+      addButton(this, levelButtonStartX + (index - 1) * levelButtonSpacing, 282, unlocked ? `${index}` : "锁", () => {
         if (unlocked) { synth.startMusic(); this.scene.start("game", { level: index }); }
       }, { width: 72, height: 48, color: unlocked ? 0x29495a : 0x222a30, stroke: unlocked ? 0x80c58b : 0x59636b });
     }
@@ -242,7 +245,7 @@ class GameScene extends Phaser.Scene {
   constructor() { super("game"); }
 
   init(data) {
-    this.levelNumber = Phaser.Math.Clamp(data.level || 1, 1, 4);
+    this.levelNumber = Phaser.Math.Clamp(data.level || 1, 1, MAX_LEVEL);
     this.level = LEVELS[this.levelNumber - 1];
     this.score = data.score || 0;
     this.lives = INITIAL_LIVES;
@@ -561,10 +564,12 @@ class GameScene extends Phaser.Scene {
   respawnPlayer() {
     if (this.ended || this.player?.active) return;
     const point = this.cellCenter(PLAYER_SPAWN.x, PLAYER_SPAWN.y);
+    const shieldUntil = this.time.now + RESPAWN_SHIELD_MS;
     this.lastPlayerVelocity = { x: 0, y: -1 };
     this.player.enableBody(true, point.x, point.y, true, true);
     this.player.setAngle(0).setVelocity(0, 0);
-    this.player.setData({ team: "player", direction: "up", hp: 1, shieldUntil: this.time.now + RESPAWN_SHIELD_MS, lastShot: 0 });
+    this.player.setData({ team: "player", direction: "up", hp: 1, shieldUntil, lastShot: 0 });
+    this.updateShieldRing(this.time.now);
     this.tweens.add({ targets: this.player, alpha: { from: 0.25, to: 1 }, duration: 150, yoyo: true, repeat: 5 });
     this.updateHud();
   }
@@ -589,6 +594,7 @@ class GameScene extends Phaser.Scene {
     }, type, this.time.now);
     this.firepower = state.firepower;
     this.player.setData("shieldUntil", state.shieldUntil);
+    this.updateShieldRing(this.time.now);
     this.freezeUntil = state.freezeUntil;
     if (state.fortifyUntil > this.fortifyUntil) this.activateFortress(state.fortifyUntil);
     this.fortifyUntil = state.fortifyUntil;
@@ -612,13 +618,24 @@ class GameScene extends Phaser.Scene {
     });
   }
 
+  updateShieldRing(time) {
+    if (!this.player?.active || this.player.getData("shieldUntil") <= time) {
+      this.shieldRing?.setVisible(false);
+      return;
+    }
+    if (!this.shieldRing) {
+      this.shieldRing = this.add.circle(this.player.x, this.player.y, 22).setStrokeStyle(3, 0x70d9ff, 0.85).setDepth(11);
+      this.shieldRing.setBlendMode(Phaser.BlendModes.ADD);
+    }
+    this.shieldRing
+      .setPosition(this.player.x, this.player.y)
+      .setVisible(true)
+      .setAlpha(0.62 + Math.sin(time / 80) * 0.25)
+      .setScale(1 + Math.sin(time / 130) * 0.08);
+  }
+
   updateEffects(time) {
-    if (this.player?.active) {
-      if (this.player.getData("shieldUntil") > time) {
-        this.shieldRing ||= this.add.circle(this.player.x, this.player.y, 20).setStrokeStyle(3, 0x70d9ff, 0.75).setDepth(10);
-        this.shieldRing.setPosition(this.player.x, this.player.y).setVisible(true).setAlpha(0.55 + Math.sin(time / 80) * 0.25);
-      } else this.shieldRing?.setVisible(false);
-    } else this.shieldRing?.setVisible(false);
+    this.updateShieldRing(time);
     const statuses = [];
     if (time < this.freezeUntil) statuses.push(`冻结 ${Math.ceil((this.freezeUntil - time) / 1000)}s`);
     if (time < this.fortifyUntil) statuses.push(`基地钢化 ${Math.ceil((this.fortifyUntil - time) / 1000)}s`);
@@ -710,7 +727,7 @@ class GameScene extends Phaser.Scene {
     const oldSave = loadSave(window.localStorage);
     const save = recordResult(oldSave, { level: this.levelNumber, won, score: this.score });
     saveProgress(window.localStorage, save);
-    const result = { won, reason, level: this.levelNumber, score: this.score, final: won && this.levelNumber === 4 };
+    const result = { won, reason, level: this.levelNumber, score: this.score, final: won && this.levelNumber === MAX_LEVEL };
     if (!won) {
       this.showFailureOverlay(result);
       return;
@@ -749,9 +766,9 @@ class ResultScene extends Phaser.Scene {
     const { won, reason, level, score, final } = this.result;
     this.cameras.main.setBackgroundColor(won ? "#12271d" : "#271617");
     this.add.text(WIDTH / 2, 105, final ? "钢铁防线守住了！" : won ? `第 ${level} 关完成` : "任务失败", textStyle(46, won ? "#ffd166" : "#ff8b75")).setOrigin(0.5);
-    this.add.text(WIDTH / 2, 175, won ? (final ? "四大战区全部告捷" : "基地安全，准备进入下一战区") : reason, textStyle(21, "#cddde4")).setOrigin(0.5);
+    this.add.text(WIDTH / 2, 175, won ? (final ? "五大战区全部告捷" : "基地安全，准备进入下一战区") : reason, textStyle(21, "#cddde4")).setOrigin(0.5);
     this.add.text(WIDTH / 2, 235, `本次得分  ${String(score).padStart(6, "0")}`, textStyle(25, "#8fd3a8")).setOrigin(0.5);
-    if (won && level < 4) addButton(this, WIDTH / 2, 320, "进入下一关", () => { synth.startMusic(); this.scene.start("game", { level: level + 1, score }); });
+    if (won && level < MAX_LEVEL) addButton(this, WIDTH / 2, 320, "进入下一关", () => { synth.startMusic(); this.scene.start("game", { level: level + 1, score }); });
     else if (!won) addButton(this, WIDTH / 2, 320, "重试本关", () => { synth.startMusic(); this.scene.start("game", { level }); });
     else addButton(this, WIDTH / 2, 320, "再次挑战", () => { synth.startMusic(); this.scene.start("game", { level: 1 }); });
     addButton(this, WIDTH / 2, 390, "返回主页", () => this.scene.start("menu"), { color: 0x263943 });
