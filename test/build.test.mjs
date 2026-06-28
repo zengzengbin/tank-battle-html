@@ -11,6 +11,7 @@ test("build creates one self-contained offline HTML game", () => {
   assert.match(html, /tank-battle-save-v1/);
   assert.match(html, /边境初战/);
   assert.match(html, /终极防线/);
+  assert.match(html, /钢铁风暴/);
   assert.match(html, /空格 \/ J/);
   assert.doesNotMatch(html, /请将手机横过来/);
   assert.doesNotMatch(html, /手机横屏/);
