@@ -4,6 +4,7 @@ import * as core from "../src/core.mjs";
 
 import {
   LEVELS,
+  MAX_LEVEL,
   SAVE_KEY,
   applyDamage,
   applyPowerUp,
@@ -14,8 +15,9 @@ import {
   recordResult,
 } from "../src/core.mjs";
 
-test("defines four progressively larger enemy waves", () => {
-  assert.deepEqual(LEVELS.map((level) => level.enemyCount), [12, 14, 16, 20]);
+test("defines five progressively larger enemy waves", () => {
+  assert.equal(MAX_LEVEL, 5);
+  assert.deepEqual(LEVELS.map((level) => level.enemyCount), [12, 14, 16, 20, 24]);
   assert.ok(LEVELS.every((level) => level.map.length === 13));
   assert.ok(LEVELS.every((level) => level.map.every((row) => row.length === 13)));
 });
@@ -108,4 +110,7 @@ test("recording a win unlocks the next level and preserves the best score", () =
   const lower = recordResult(first, { level: 2, won: false, score: 500 });
   assert.equal(lower.unlockedLevel, 2);
   assert.equal(lower.highScore, 1200);
+  const final = recordResult({ ...first, unlockedLevel: MAX_LEVEL }, { level: MAX_LEVEL, won: true, score: 1500 });
+  assert.equal(final.unlockedLevel, MAX_LEVEL);
+  assert.equal(final.highScore, 1500);
 });
