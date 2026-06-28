@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>坦克大战 15秒介绍视频 Composition</title>
+  <style>
+    :root {
+      --bg: #08111d;
+      --panel: rgba(11, 23, 36, 0.86);
+      --gold: #ffd166;
+      --green: #70d487;
+      --red: #ff7b72;
+      --blue: #7dd3fc;
+      --text: #e8f2f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, #152c42 0%, var(--bg) 62%, #02050a 100%);
+      color: var(--text);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    }
+    .stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      margin: 0 auto;
+      background-image:
+        linear-gradient(rgba(125,211,252,.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125,211,252,.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .scene {
+      position: absolute;
+      inset: 60px;
+      border: 2px solid rgba(125,211,252,.22);
+      border-radius: 24px;
+      background: var(--panel);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      opacity: 0;
+      animation: show 15s linear infinite;
+    }
+    .s1 { animation-delay: 0s; }
+    .s2 { animation-delay: 3s; }
+    .s3 { animation-delay: 6s; }
+    .s4 { animation-delay: 9s; }
+    .s5 { animation-delay: 12s; }
+    h1 { font-size: 86px; color: var(--gold); margin: 0 0 22px; letter-spacing: 8px; }
+    h2 { font-size: 54px; color: var(--gold); margin: 0 0 22px; }
+    p { font-size: 30px; line-height: 1.65; margin: 0; }
+    .accent { color: var(--green); font-weight: 700; }
+    .danger { color: var(--red); font-weight: 700; }
+    .key { display: inline-block; padding: 12px 20px; margin: 8px; border-radius: 12px; background: #263949; border: 1px solid #6b8493; color: #fff; }
+    .tank {
+      width: 90px; height: 58px; border-radius: 12px; background: var(--green); margin: 28px auto 0; position: relative;
+      box-shadow: 0 0 28px rgba(112,212,135,.42);
+      animation: tankMove 3s ease-in-out infinite;
+    }
+    .tank::after { content: ""; position: absolute; right: -44px; top: 24px; width: 48px; height: 10px; background: var(--gold); border-radius: 8px; }
+    .bullet { width: 42px; height: 10px; border-radius: 10px; background: var(--gold); margin: 20px auto 0; animation: bullet 1.2s linear infinite; }
+    @keyframes show {
+      0%, 19% { opacity: 1; transform: scale(1); }
+      20%, 100% { opacity: 0; transform: scale(.98); }
+    }
+    @keyframes tankMove { 0%,100% { transform: translateX(-30px); } 50% { transform: translateX(30px); } }
+    @keyframes bullet { from { transform: translateX(-140px); opacity: 0; } 20% { opacity: 1; } to { transform: translateX(150px); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section class="scene s1">
+      <div><h1>坦克大战</h1><p>电脑键盘版 · 复古像素战场</p><div class="tank"></div></div>
+    </section>
+    <section class="scene s2">
+      <div><h2>守护基地</h2><p>在 <span class="accent">13×13</span> 战场中消灭敌军<br/>砖墙、钢墙、草丛、冰面共同构成战术空间</p><div class="bullet"></div></div>
+    </section>
+    <section class="scene s3">
+      <div><h2>键盘操作</h2><p><span class="key">WASD</span><span class="key">方向键</span> 移动<br/><span class="key">空格</span><span class="key">J</span> 开火 · <span class="key">P / Esc</span> 暂停</p></div>
+    </section>
+    <section class="scene s4">
+      <div><h2>四关挑战</h2><p><span class="accent">2 条生命</span>、复活无敌、道具强化<br/>星星、护盾、冻结、炸弹、基地钢化</p></div>
+    </section>
+    <section class="scene s5">
+      <div><h2>即刻开战</h2><p>打开 <span class="accent">坦克大战.html</span><br/>保护基地，打穿四大战区！</p></div>
+    </section>
+  </main>
+</body>
+</html>
