@@ -64,6 +64,21 @@ const MAPS = [
     ".....bbb.....",
     ".....bBb.....",
   ],
+  [
+    ".............",
+    ".s.g.bbb.g.s.",
+    ".w.........w.",
+    ".w.b.s.s.b.w.",
+    ".w...i.i...w.",
+    "sss..i.i..sss",
+    "...g.www.g...",
+    ".bb..sss..bb.",
+    "..s.......s..",
+    ".bbb..s..bbb.",
+    ".....b.b.....",
+    ".....bbb.....",
+    ".....bBb.....",
+  ],
 ];
 
 export const LEVELS = [
@@ -71,7 +86,10 @@ export const LEVELS = [
   { id: 2, name: "水草迷阵", enemyCount: 14, spawnDelay: 1650, weights: [38, 32, 20, 10], map: MAPS[1] },
   { id: 3, name: "寒钢要塞", enemyCount: 16, spawnDelay: 1450, weights: [25, 30, 25, 20], map: MAPS[2] },
   { id: 4, name: "终极防线", enemyCount: 20, spawnDelay: 1250, weights: [18, 27, 27, 28], map: MAPS[3] },
+  { id: 5, name: "钢铁风暴", enemyCount: 24, spawnDelay: 1100, weights: [12, 24, 28, 36], map: MAPS[4] },
 ];
+
+export const MAX_LEVEL = LEVELS.length;
 
 const TERRAIN_BY_CHAR = {
   b: "brick",
@@ -138,7 +156,7 @@ export function loadSave(storage) {
     if (value?.version !== 1) return createDefaultSave();
     return {
       version: 1,
-      unlockedLevel: Math.min(4, Math.max(1, Number(value.unlockedLevel) || 1)),
+      unlockedLevel: Math.min(MAX_LEVEL, Math.max(1, Number(value.unlockedLevel) || 1)),
       highScore: Math.max(0, Number(value.highScore) || 0),
       sound: value.sound !== false,
     };
@@ -158,7 +176,7 @@ export function saveProgress(storage, save) {
 
 export function recordResult(save, result) {
   const unlockedLevel = result.won
-    ? Math.max(save.unlockedLevel, Math.min(4, result.level + 1))
+    ? Math.max(save.unlockedLevel, Math.min(MAX_LEVEL, result.level + 1))
     : save.unlockedLevel;
   return {
     ...save,
